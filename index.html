@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MIDI Visuals</title>
+  <style>
+    html, body { margin: 0; background: #000; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+  <!-- Our code. ORDER MATTERS: each file can only use things from files above it. -->
+  <script src="config.js"></script>
+  <script src="input.js"></script>
+  <script src="hub.js"></script>
+  <script src="scenes/scene-arcade.js"></script>
+  <script src="scenes/scene-night.js"></script>
+  <script src="scene-manager.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
