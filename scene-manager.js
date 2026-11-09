@@ -1,7 +1,7 @@
 // ============ SCENE MANAGER ============
 // Passes events to the active scene and switches scenes.
 
-const scenes = [sceneArcade, sceneNight]; // add new scenes here
+const scenes = [sceneArcade, sceneNight, sceneDrums, sceneMeme]; // add new scenes here
 
 const sceneManager = {
   index: 0,
@@ -16,6 +16,9 @@ const sceneManager = {
   },
 
   handle(e) {
+    // Bank B pads 6-8 are reserved for the looper
+    if (looper.control(e)) return;
+
     // Bank B pads 1..N are reserved for scene switching
     const isScenePad = (e.kind === 'padOn' || e.kind === 'padOff')
       && e.bank === 'B' && e.pad <= scenes.length;
@@ -23,8 +26,18 @@ const sceneManager = {
       if (e.kind === 'padOn') this.switchTo(e.pad - 1);
       return;
     }
+
+    looper.record(e); // remembers the hit if the looper is recording
     this.current.sound.onEvent(e);
     this.current.visual.onEvent(e);
+  },
+
+  // used by the looper: play an event in a specific scene (sound always, visuals only if it is on screen)
+  deliver(e, i) {
+    const s = scenes[i];
+    if (!s) return;
+    s.sound.onEvent(e);
+    if (i === this.index) s.visual.onEvent(e);
   },
 
   switchTo(i) {
