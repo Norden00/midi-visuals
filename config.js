@@ -12,3 +12,6 @@ const PALETTE = ['#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#83769c
 
 const snap = v => Math.floor(v / CELL) * CELL;                // round to the pixel grid
 const toNote = midi => Tone.Frequency(midi, 'midi').toNote(); // 60 -> "C4"
+
+const AUDIO_LOOKAHEAD = 0.01; // seconds. Tone's default is 0.1, which is the delay you feel
+Tone.getContext().lookAhead = AUDIO_LOOKAHEAD;

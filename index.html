@@ -4,8 +4,13 @@
   <meta charset="utf-8">
   <title>MIDI Visuals</title>
   <style>
-    html, body { margin: 0; background: #000; }
-    canvas { display: block; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    /* The sketch draws at a fixed size and is scaled to fill the window (keeps the chunky pixels). */
+    canvas {
+      position: fixed !important; inset: 0; display: block;
+      width: 100vw !important; height: 100vh !important;
+      object-fit: contain; image-rendering: pixelated;
+    }
   </style>
 
   <!-- Libraries -->
@@ -23,7 +28,7 @@
   <script src="scenes/scene-meme.js"></script>
   <script src="scene-manager.js"></script>
   <script src="looper.js"></script>
-  <script src="ui.js"></script>      <!-- new line -->
+  <script src="ui.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
