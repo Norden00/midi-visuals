@@ -57,12 +57,21 @@ active scene. The looper plays recorded events back through `sceneManager.delive
    Sounds are synthesized. Own files: put audio in `sounds/` and pictures/GIFs in `images/`, list them
    in `SAMPLE_FILES` / `MEME_IMAGES` at the top of `scene-meme.js` (missing files fall back safely).
    `MEME_LOOK` sets label/effect per name; unknown names get a default look.
+   Meme clips: white keys C (60) ah, D (62), F (65), G (67), A (69), B (71), top C (72); black keys C# (61),
+   D# (63), F# (66), G# (68), A# (70) fah, plus low G# (56) and A# (58). ah and fah are sound only with the
+   'shout' pixel visual (their video was just a speaker icon). E (64) keeps the synth ERROR. Clips play from `videos/` (H.264 .mp4, drawn muted)
+   with their audio from `sounds/` (.m4a). Set in `MEME_NOTES` / `MEME_VIDEOS` / `SAMPLE_FILES`.
+   Convert iPhone .mov (HEVC) first, Chrome on Windows may not play HEVC:
+   `avconvert -s in.mov -p Preset960x540 -o videos/x.mp4` and `-p PresetAppleM4A -o sounds/x.m4a`.
 
 ## Looper (done)
 Count-in (1 bar), records N bars, then loops; further presses overdub on the next round. Hits are
 quantized to 16ths, layers remember the scene they were played in, undo removes the last layer.
 Knobs and joystick are not recorded. Keyboard shortcuts: R, Space, Z, X, M (metronome), H (loop bar).
 Clock is a 5 ms `setInterval` plus `performance.now()`.
+Looped events carry `fromLoop: true`. Scenes not on screen can get looped events through the optional
+`visual.onBackgroundEvent(e)` and draw on top with `visual.drawOverlay()` (called from `main.js` draw).
+MEME FX uses this: looped memes are toned down (`MEME_LOOP_FX`) and show in a top-right corner box in other scenes.
 
 ## UI (done)
 Canvas is drawn at a fixed 960x540 and scaled by CSS to fill the window (pixelated, 16:9 with black bars).

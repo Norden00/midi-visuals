@@ -38,6 +38,12 @@ const sceneManager = {
     if (!s) return;
     s.sound.onEvent(e);
     if (i === this.index) s.visual.onEvent(e);
+    else if (s.visual.onBackgroundEvent) s.visual.onBackgroundEvent(e); // optional: scene is not on screen
+  },
+
+  // optional small overlays from scenes that are not on screen (e.g. looped memes in a corner box)
+  drawOverlays() {
+    scenes.forEach((s, i) => { if (i !== this.index && s.visual.drawOverlay) s.visual.drawOverlay(); });
   },
 
   switchTo(i) {

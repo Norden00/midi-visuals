@@ -33,6 +33,7 @@ function keyPressed() { if (looper.key(key)) return false; }
 
 function draw() {
   sceneManager.current.visual.draw();
+  sceneManager.drawOverlays();
   fill(255);
   textSize(16);
   text(`${sceneManager.index + 1}: ${sceneManager.current.name}`, 12, 24);

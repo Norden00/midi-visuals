@@ -251,7 +251,7 @@ const looper = {
   },
 
   fire(ev) {
-    const e = { ...ev.e };
+    const e = { ...ev.e, fromLoop: true }; // scenes can use fromLoop to tone down looped visuals
     const key = ev.scene + ':' + e.note;
     if (e.kind === 'noteOn') this.loopHeld.set(key, { note: e.note, scene: ev.scene });
     if (e.kind === 'noteOff') this.loopHeld.delete(key);

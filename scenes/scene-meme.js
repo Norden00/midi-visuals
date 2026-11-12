@@ -5,8 +5,20 @@
 // KEYS (default octave, C = 48):
 //   C vineBoom   C# airhorn    D sadTrombone  D# recordScratch  E winError   F coin
 //   F# dunDunDun G rimshot     G# slideUp     A slideDown       A# honk      B sparkle
+// MEME CLIPS (recorded sound, replace the synth sounds on these keys):
+//   White keys, middle octave:
+//     C (60) ah (own pixel visual)   D (62) goOnMute       F (65) youNeedToLeave   G (67) state
+//     A (69) hitTheRoad              B (71) private        top C (72) rocketLeague
+//     E (64) keeps the synthesized winError.
+//   Black keys, middle octave:
+//     C# (61) miBombo   D# (63) nooo   F# (66) theRock   G# (68) tooMuchFood   A# (70) fah (own pixel visual)
+//   Black keys, low octave (these two synth sounds are gone, the other low black keys keep theirs):
+//     G# (56) laughingCat   A# (58) scream
 // PADS: A1 explosion, A2 crickets, A3 siren, A4 applause, B5 bassDrop
 // (Bank B pads 1-4 are kept free for switching scenes.)
+//
+// LOOPER: looped memes show their visuals too, but toned down (see MEME_LOOP_FX).
+// If another scene is on screen, looped memes appear in a small box in the top-right corner.
 //
 // REAL MEME SOUNDS: this scene synthesizes its sounds, so it works with no files.
 // To use a real recording instead, put an audio file in a "sounds" folder next to
@@ -17,9 +29,58 @@ const MEME_KEYS = ['vineBoom', 'airhorn', 'sadTrombone', 'recordScratch', 'winEr
                    'dunDunDun', 'rimshot', 'slideUp', 'slideDown', 'honk', 'sparkle'];
 const MEME_PADS = { A1: 'explosion', A2: 'crickets', A3: 'siren', A4: 'applause', B5: 'bassDrop' };
 
+// Keys that play something else than MEME_KEYS (note number -> name)
+const MEME_NOTES = {
+  // white keys
+  60: 'ah', 62: 'goOnMute', 65: 'youNeedToLeave', 67: 'state', 69: 'hitTheRoad', 71: 'private', 72: 'rocketLeague',
+  // black keys
+  61: 'miBombo', 63: 'nooo', 66: 'theRock', 68: 'tooMuchFood', 70: 'fah',
+  56: 'laughingCat', 58: 'scream',
+};
+
+// Video clips (shown on screen, muted). Their sound comes from SAMPLE_FILES below.
+const MEME_VIDEOS = {
+  hitTheRoad: 'videos/hit-the-road.mp4',
+  private:    'videos/private.mp4',
+  state:      'videos/state.mp4',
+  youNeedToLeave: 'videos/you-need-to-leave.mp4',
+  goOnMute:   'videos/go-on-mute.mp4',
+  rocketLeague: 'videos/rocket-league.mp4',
+  miBombo:    'videos/mi-bombo.mp4',
+  nooo:       'videos/nooo.mp4',
+  theRock:    'videos/the-rock.mp4',
+  tooMuchFood: 'videos/too-much-food.mp4',
+  laughingCat: 'videos/laughing-cat.mp4',
+  scream:     'videos/scream.mp4',
+  // ah and fah have no video on purpose (it was only a speaker icon): they use the 'shout' pixel effect
+};
+
 const SAMPLE_FILES = {
+  hitTheRoad: 'sounds/hit-the-road.m4a',
+  private:    'sounds/private.m4a',
+  state:      'sounds/state.m4a',
+  youNeedToLeave: 'sounds/you-need-to-leave.m4a',
+  goOnMute:   'sounds/go-on-mute.m4a',
+  rocketLeague: 'sounds/rocket-league.m4a',
+  ah:         'sounds/ah.m4a',
+  fah:        'sounds/fah.m4a',
+  miBombo:    'sounds/mi-bombo.m4a',
+  nooo:       'sounds/nooo.m4a',
+  theRock:    'sounds/the-rock.m4a',
+  tooMuchFood: 'sounds/too-much-food.m4a',
+  laughingCat: 'sounds/laughing-cat.m4a',
+  scream:     'sounds/scream.m4a',
   // vineBoom: 'sounds/vine-boom.mp3',
   // airhorn:  'sounds/airhorn.mp3',
+};
+
+// How looped memes look, so the loop does not turn the screen into total chaos
+const MEME_LOOP_FX = {
+  minGap: 10,      // frames between two looped effects (60 = 1 second). Hits closer than that are skipped
+  strength: 0.4,   // flashes, shakes and darkening from the loop (1 = as strong as live)
+  videoSize: 0.7,  // looped clips are drawn smaller than live ones
+  maxFx: 8,        // max effects on screen at once
+  overlay: true,   // corner box with looped memes while another scene is on screen
 };
 
 // what each sound looks like: label, effect type, how many frames it lasts
@@ -41,9 +102,24 @@ const MEME_LOOK = {
   siren:         { label: 'WEE WOO',           fx: 'glitch',  life: 60 },
   applause:      { label: 'GG',                fx: 'sparkle', life: 60 },
   bassDrop:      { label: 'DROP',              fx: 'shake',   life: 45 },
+  // video clips: life = clip length in frames (60 per second)
+  hitTheRoad:    { label: 'HIT THE ROAD DUDE', fx: 'video',   life: 72 },
+  private:       { label: 'PRIVATE',           fx: 'video',   life: 110 },
+  state:         { label: 'STATE?',            fx: 'video',   life: 42 },
+  youNeedToLeave:{ label: 'YOU NEED TO LEAVE', fx: 'video',   life: 76 },
+  goOnMute:      { label: 'GO ON MUTE',        fx: 'video',   life: 152 },
+  rocketLeague:  { label: 'ROCKET LEAGUE',     fx: 'video',   life: 108 },
+  miBombo:       { label: 'MI BOMBO',          fx: 'video',   life: 60 },
+  nooo:          { label: 'NOOO!',             fx: 'video',   life: 60 },
+  theRock:       { label: 'THE ROCK',          fx: 'video',   life: 60 },
+  tooMuchFood:   { label: 'TOO MUCH FOOD',     fx: 'video',   life: 60 },
+  laughingCat:   { label: 'HAHAHA',            fx: 'video',   life: 156 },
+  scream:        { label: 'AAARGH!',           fx: 'video',   life: 60 },
+  ah:            { label: 'AAAH!',             fx: 'shout',   life: 60 },
+  fah:           { label: 'FAAAH!',            fx: 'shout',   life: 56 },
 };
 
-const memeForNote = n => (n >= 48 ? MEME_KEYS[(n - 48) % 12] : null);
+const memeForNote = n => MEME_NOTES[n] || (n >= 48 ? MEME_KEYS[(n - 48) % 12] : null);
 
 const sceneMeme = {
   name: 'MEME FX',
@@ -260,15 +336,97 @@ const sceneMeme = {
 
   visual: {
     fx: [],
-    init() {},
-    enter() { this.fx = []; },
-    exit() {},
+    videos: {},
+    mini: null,         // the looped meme shown in the corner box while another scene is on screen
+    lastLoopFx: -999,   // frame of the last looped effect (for MEME_LOOP_FX.minGap)
+    init() {
+      // load the clips once, hidden and muted (the sound half plays the audio)
+      for (const [name, url] of Object.entries(MEME_VIDEOS)) {
+        const v = createVideo(url);
+        v.hide();
+        v.elt.muted = true;
+        v.elt.playsInline = true;
+        v.elt.onerror = () => console.warn('Could not load video', url);
+        this.videos[name] = v;
+      }
+    },
+    enter() { this.fx = []; this.mini = null; },
+    exit() { Object.values(this.videos).forEach(v => v.elt.pause()); },
+
+    videoReady(name) {
+      const v = this.videos[name];
+      return v && v.elt.readyState >= 2; // 2 = has a frame to show
+    },
+
+    nameFor(e) {
+      if (e.kind === 'noteOn') return memeForNote(e.note);
+      if (e.kind === 'padOn') return MEME_PADS[e.bank + e.pad];
+      return null;
+    },
+
+    playVideo(name) {
+      const v = this.videos[name];
+      if (!v) return;
+      v.elt.currentTime = 0; // restart the clip from the beginning
+      v.elt.play().catch(() => {});
+    },
+
+    // looped hits are thinned out: not too close together, and a clip that is
+    // still in its first half is not restarted
+    loopHitAllowed(name, stillPlaying) {
+      if (frameCount - this.lastLoopFx < MEME_LOOP_FX.minGap) return false;
+      if (MEME_VIDEOS[name] && stillPlaying) return false;
+      this.lastLoopFx = frameCount;
+      return true;
+    },
 
     onEvent(e) {
-      let name = null;
-      if (e.kind === 'noteOn') name = memeForNote(e.note);
-      if (e.kind === 'padOn') name = MEME_PADS[e.bank + e.pad];
-      if (name) this.fx.push({ name, age: 0, c: PALETTE[floor(random(PALETTE.length))] });
+      const name = this.nameFor(e);
+      if (!name) return;
+      if (e.fromLoop) {
+        const playing = this.fx.some(f => f.name === name && f.age < MEME_LOOK[name].life / 2);
+        if (!this.loopHitAllowed(name, playing)) return;
+      }
+      this.playVideo(name);
+      this.fx.push({ name, age: 0, loop: !!e.fromLoop, c: PALETTE[floor(random(PALETTE.length))] });
+      while (this.fx.length > MEME_LOOP_FX.maxFx) this.fx.shift(); // drop the oldest
+    },
+
+    // looped meme while another scene is on screen
+    onBackgroundEvent(e) {
+      if (!MEME_LOOP_FX.overlay) return;
+      const name = this.nameFor(e);
+      if (!name) return;
+      const m = this.mini;
+      if (!this.loopHitAllowed(name, m && m.name === name && m.age < MEME_LOOK[name].life / 2)) return;
+      this.playVideo(name);
+      this.mini = { name, age: 0, c: PALETTE[floor(random(PALETTE.length))] };
+    },
+
+    // small corner box (top-right) drawn on top of the other scene
+    drawOverlay() {
+      const m = this.mini;
+      if (!m) return;
+      if (m.age >= MEME_LOOK[m.name].life) { this.mini = null; return; }
+      push();
+      noStroke();
+      const right = width - CELL * 2, top = CELL * 2;
+      if (this.videoReady(m.name)) {
+        const el = this.videos[m.name].elt;
+        const k = min(240 / el.videoWidth, 180 / el.videoHeight);
+        const w = snap(el.videoWidth * k), h = snap(el.videoHeight * k);
+        const x = snap(right - w), y = top + CELL;
+        fill(m.c); rect(x - CELL, y - CELL, w + CELL * 2, h + CELL * 2);
+        image(this.videos[m.name], x, y, w, h);
+      } else {
+        const label = MEME_LOOK[m.name].label;
+        textSize(20); textStyle(BOLD); textAlign(RIGHT, TOP);
+        const w = snap(textWidth(label) + CELL * 4);
+        fill(m.c); rect(snap(right - w), top, w, CELL * 5);
+        fill(0); text(label, right - CELL * 2, top + CELL);
+      }
+      pop();
+      m.age++;
     },
 
     draw() {
@@ -276,10 +434,12 @@ const sceneMeme = {
       push();
       const cx = width / 2, cy = height / 2;
 
+      const k = f => (f.loop ? MEME_LOOP_FX.strength : 1); // looped effects are softer
+
       // screen shake (applied to everything drawn after it)
       for (const f of this.fx) {
         if (MEME_LOOK[f.name].fx === 'shake') {
-          const m = 14 * (1 - f.age / MEME_LOOK[f.name].life);
+          const m = 14 * k(f) * (1 - f.age / MEME_LOOK[f.name].life);
           translate(random(-m, m), random(-m, m));
         }
       }
@@ -289,11 +449,11 @@ const sceneMeme = {
         fill(f.c);
         switch (look.fx) {
           case 'flash':
-            fill(255, max(0, 255 - f.age * 18));
+            fill(255, max(0, 255 - f.age * 18) * k(f));
             rect(0, 0, width, height);
             break;
           case 'glitch':
-            for (let i = 0; i < 8; i++)
+            for (let i = 0; i < (f.loop ? 3 : 8); i++)
               rect(0, snap(random(height)), width, CELL * floor(random(1, 4)));
             break;
           case 'box':
@@ -313,8 +473,35 @@ const sceneMeme = {
             for (let i = 0; i < 10; i++)
               rect(snap(random(width)), snap(random(height)), CELL, CELL);
             break;
+          case 'video': {
+            if (!this.videoReady(f.name)) break;
+            // fit the clip inside the screen (keeps its shape), chunky colored frame around it
+            const el = this.videos[f.name].elt;
+            const size = f.loop ? MEME_LOOP_FX.videoSize : 1; // looped clips are smaller
+            const s = size * min((width - CELL * 4) / el.videoWidth, (height - CELL * 4) / el.videoHeight);
+            const w = snap(el.videoWidth * s), h = snap(el.videoHeight * s);
+            const x = snap(cx - w / 2), y = snap(cy - h / 2);
+            rect(x - CELL, y - CELL, w + CELL * 2, h + CELL * 2);
+            image(this.videos[f.name], x, y, w, h);
+            break;
+          }
+          case 'shout': {
+            // pixel sound waves: square rings growing out from the middle, plus a little shake
+            const m = 10 * k(f) * (1 - f.age / MEME_LOOK[f.name].life);
+            translate(random(-m, m), random(-m, m));
+            for (let i = 0; i < 4; i++) {
+              const r = snap(40 + f.age * 9 - i * 60);
+              if (r <= 0) continue;
+              fill(PALETTE[(i + floor(f.age / 4)) % PALETTE.length]);
+              rect(snap(cx - r), snap(cy - r), r * 2, CELL * 2);        // top
+              rect(snap(cx - r), snap(cy + r), r * 2 + CELL * 2, CELL * 2); // bottom
+              rect(snap(cx - r), snap(cy - r), CELL * 2, r * 2);        // left
+              rect(snap(cx + r), snap(cy - r), CELL * 2, r * 2);        // right
+            }
+            break;
+          }
           case 'sad':
-            fill(0, 0, 0, min(f.age * 6, 150));
+            fill(0, 0, 0, min(f.age * 6, 150) * k(f));
             rect(0, 0, width, height);
             fill(80, 160, 255);
             for (let i = 0; i < 8; i++)
@@ -326,11 +513,11 @@ const sceneMeme = {
 
       // big meme text for the newest effect
       const last = this.fx[this.fx.length - 1];
-      if (last) {
-        const bump = last.age < 5 ? (5 - last.age) * 6 : 0;
+      if (last && !(MEME_VIDEOS[last.name] && this.videoReady(last.name))) {
+        const bump = last.age < 5 && !last.loop ? (5 - last.age) * 6 : 0;
         textAlign(CENTER, CENTER);
         textStyle(BOLD);
-        textSize(56 + bump);
+        textSize((last.loop ? 36 : 56) + bump); // looped text is smaller
         fill(0); text(MEME_LOOK[last.name].label, cx + 4, cy + 4);
         fill(255); text(MEME_LOOK[last.name].label, cx, cy);
       }
