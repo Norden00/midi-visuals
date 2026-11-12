@@ -171,7 +171,7 @@ const ui = {
     const bars = s === 'idle' || s === 'stopped' ? L.bars : L.recBars;
     const secs = (bars * 4 * 60 / bpm).toFixed(1);
     const text = { idle: 'Ready', countin: 'Count-in…', recording: 'Recording', stopped: 'Stopped',
-      playing: L.rec ? 'Overdubbing' : L.overdubArmed ? 'Overdub starts next round' : 'Looping' }[s];
+      playing: L.rec ? 'Overdubbing' : L.overdubCountdown(performance.now()) ? 'Count-in…' : L.overdubArmed ? 'Overdub starts soon' : 'Looping' }[s];
     this.status.textContent = `${text}  ·  ${bpm} BPM  ·  ${bars} bar${bars > 1 ? 's' : ''} (${secs}s)`;
 
     // layers (only rebuilt when something changed)

@@ -28,6 +28,7 @@ const looper = {
   layers: [],           // [{ events: [{t, scene, e}], startCycle }]
   rec: null,            // the pass being recorded right now
   overdubArmed: false,
+  overdubCycle: 0,      // the loop round where the armed overdub starts (after its count-in)
   bpm: LOOP_CONFIG.bpm, bars: LOOP_CONFIG.bars,
   metronome: LOOP_CONFIG.metronome, quantize: LOOP_CONFIG.quantize, showHud: LOOP_CONFIG.showHud,
   beat: 600, L: 9600, recBars: 4,   // beat length and loop length in ms (set when recording starts)
@@ -79,11 +80,17 @@ const looper = {
       case 'recording': this.rec = null; this.state = 'idle'; break; // discard the first take
       case 'playing':
         if (this.rec) this.commitRec(Math.max(1, performance.now() - this.rec.startMs)); // stop overdub early, keep it
-        else this.overdubArmed = !this.overdubArmed;
+        else if (this.overdubArmed) this.overdubArmed = false;    // cancel the armed overdub
+        else { this.overdubArmed = true; this.overdubCycle = this.nextOverdubCycle(); }
         break;
-      case 'stopped':                                              // restart and overdub right away
-        this.startPlaying();
-        this.rec = this.newRec(0);
+      case 'stopped':                                              // count in, then restart and overdub
+        if (LOOP_CONFIG.countIn) {
+          this.startPlaying(4 * this.beat);
+          this.overdubArmed = true; this.overdubCycle = 0;
+        } else {
+          this.startPlaying();
+          this.rec = this.newRec(0);
+        }
         break;
     }
   },
@@ -127,10 +134,11 @@ const looper = {
     }
   },
 
-  startPlaying() {
+  // delay = count-in time in ms before the loop starts again from the top
+  startPlaying(delay = 0) {
     const now = performance.now();
-    this.t0 = this.loopStart = now;
-    this.lastAbs = 0; this.lastBeat = -1;
+    this.t0 = now; this.loopStart = now + delay;
+    this.lastAbs = -delay; this.lastBeat = -1;
     this.layers.forEach(l => { l.startCycle = 0; });
     this.state = 'playing';
   },
@@ -144,6 +152,21 @@ const looper = {
   releaseHeld() {
     for (const h of this.loopHeld.values()) sceneManager.deliver({ kind: 'noteOff', note: h.note }, h.scene);
     this.loopHeld.clear();
+  },
+
+  // first loop round that leaves room for a full 1-bar count-in before the new layer
+  nextOverdubCycle() {
+    const abs = performance.now() - this.loopStart;
+    let c = Math.floor(abs / this.L) + 1;
+    if (LOOP_CONFIG.countIn) while (c * this.L - abs < 4 * this.beat) c++;
+    return c;
+  },
+
+  // ms left of the count-in before an armed overdub starts (0 = no count-in right now)
+  overdubCountdown(now) {
+    if (this.state !== 'playing' || !this.overdubArmed || this.rec || !LOOP_CONFIG.countIn) return 0;
+    const left = this.loopStart + this.overdubCycle * this.L - now;
+    return left > 0 && left <= 4 * this.beat ? left : 0;
   },
 
   newRec(cycle) {
@@ -181,7 +204,8 @@ const looper = {
 
   // ---------- the clock ----------
   clock(now) {
-    const active = this.state === 'countin' || this.state === 'recording' || (this.state === 'playing' && this.rec);
+    const active = this.state === 'countin' || this.state === 'recording' ||
+      (this.state === 'playing' && (this.rec || this.overdubCountdown(now) > 0));
     if (!active || !this.metronome) return;
     const idx = Math.floor((now - this.t0) / this.beat);
     if (idx > this.lastBeat) {
@@ -210,7 +234,7 @@ const looper = {
     const L = this.L, abs = now - this.loopStart, cycle = Math.floor(abs / L);
     const lastCycle = Math.floor(this.lastAbs / L);
     if (this.rec && cycle > this.rec.cycle) this.commitRec();  // overdub pass finished
-    if (this.overdubArmed && !this.rec && cycle > lastCycle) { // a new round starts: begin overdub
+    if (this.overdubArmed && !this.rec && cycle >= this.overdubCycle) { // count-in done: begin overdub
       this.rec = this.newRec(cycle); this.overdubArmed = false;
     }
 
@@ -249,7 +273,8 @@ const looper = {
     else if (this.state === 'playing') {
       pos = (((now - this.loopStart) % this.L) + this.L) % this.L / bms;
       if (this.rec) { label = '● OVERDUB'; col = [255, 60, 60]; }
-      else if (this.overdubArmed) { label = '▶ LOOP   overdub next round'; col = [255, 200, 0]; }
+      else if (this.overdubCountdown(now)) { label = 'COUNT-IN  new layer'; col = [255, 200, 0]; }
+      else if (this.overdubArmed) { label = '▶ LOOP   overdub soon'; col = [255, 200, 0]; }
       else { label = '▶ LOOP'; col = [60, 255, 120]; }
     } else { label = '■ STOPPED'; }
     if (this.layers.length) label += `   ${this.layers.length} layer${this.layers.length > 1 ? 's' : ''}`;
@@ -262,8 +287,10 @@ const looper = {
       fill(i <= pos ? color(...col) : color(255, 255, 255, i % 4 === 0 ? 70 : 35));
       rect(12 + i * cw, height - 24, cw - 3, i % 4 === 0 ? 10 : 7);
     }
-    if (this.state === 'countin') {
-      const n = 4 - Math.min(3, Math.floor((now - this.t0) / this.beat));
+    let n = 0;
+    if (this.state === 'countin') n = 4 - Math.min(3, Math.floor((now - this.t0) / this.beat));
+    else { const left = this.overdubCountdown(now); if (left) n = Math.ceil(left / this.beat); }
+    if (n) {
       textAlign(CENTER, CENTER); textSize(160); fill(255, 255, 255, 210);
       text(n, width / 2, height / 2);
     }
